@@ -1,16 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PredictorForm from './components/PredictorForm';
 
 const App = () => {
-  const [predictionResult, setPredictionResult] = useState(null);
-
-  const handlePrediction = (result) => {
-    setPredictionResult(result);
-  };
+ 
 
   return (
     <div>
-      <PredictorForm/>
+      <PredictorForm csvfile="questions"/>
     </div>
   );
 };

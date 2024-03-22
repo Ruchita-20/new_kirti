@@ -1,10 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const PredictorForm = ({ handlePrediction }) => {
+import Papa from 'papaparse'; 
+const PredictorForm = ({ csvfile }) => {
+  const [questions, setQuestions] = useState([]);
   const [responses, setResponses] = useState(Array(10).fill('10'));
   const [result, setResult] = useState(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`/${csvfile}.csv`);
+        const reader = response.body.getReader();
+        const result = await reader.read();
+        const decoder = new TextDecoder('utf-8');
+        const csv = decoder.decode(result.value);
+        const { data } = Papa.parse(csv, { header: true });
+        setQuestions(data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+  
   useEffect(() => {
     if (result !== null) {
       console.log('Result State:', result);
@@ -47,17 +66,20 @@ const PredictorForm = ({ handlePrediction }) => {
       <form onSubmit={handleSubmit}>
         {responses.map((value, index) => (
           <div key={index}>
-            <label htmlFor={`col${index}`}>Question {index + 1}:</label>
-            <select
+            <label htmlFor={`col${index}`}>{questions[index]?.question}</label>
+            <label><input type='radio' value="10" name={`col${index}`} onChange={() => handleResponseChange(index, "10")}/>Rarely</label>
+            <label><input type='radio' value="20" name={`col${index}`} onChange={() => handleResponseChange(index, "20")}/>Sometimes</label>
+            <label><input type='radio' value="30" name={`col${index}`} onChange={() => handleResponseChange(index, "30")}/>Frequently</label>
+            {/* <select
               name={`col${index}`}
               id={`col${index}`}
               value={value}
               onChange={(e) => handleResponseChange(index, e.target.value)}
             >
-              <option value="10">Rarely</option>
-              <option value="20">Sometimes</option>
-              <option value="30">Frequently</option>
-            </select>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="30">30</option>
+            </select> */}
             <br />
           </div>
         ))}
@@ -66,7 +88,7 @@ const PredictorForm = ({ handlePrediction }) => {
       {result !== null && (
         <div>
           <h2>Prediction Result:</h2>
-          <p>Predicted Total: {result.predicted_total}</p>
+          <p>Predicted Percentage: {result.predicted_total}</p>
         </div>
       )}
     </div>
