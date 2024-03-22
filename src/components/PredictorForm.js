@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse'; 
-const PredictorForm = ({ csvfile }) => {
+import './PredictorForm.css'; // Importing CSS for styling
+
+const PredictorForm = ({ csvfile, onClose }) => {
   const [questions, setQuestions] = useState([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [responses, setResponses] = useState(Array(10).fill('10'));
   const [result, setResult] = useState(null);
+  const [selectedOption, setSelectedOption] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,7 +27,7 @@ const PredictorForm = ({ csvfile }) => {
 
     fetchData();
   }, []);
-  
+
   useEffect(() => {
     if (result !== null) {
       console.log('Result State:', result);
@@ -34,23 +38,36 @@ const PredictorForm = ({ csvfile }) => {
     const newResponses = [...responses];
     newResponses[index] = value;
     setResponses(newResponses);
+    setSelectedOption({ ...selectedOption, [index]: value });
+  };
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
+  const handleExit = () => {
+    onClose();
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent the default form submission behavior
+    e.preventDefault();
 
     try {
       const res = await axios.post('http://localhost:5000/predict', {
-        col0: responses[0],
-        col1: responses[1],
-        col2: responses[2],
-        col3: responses[3],
-        col4: responses[4],
-        col5: responses[5],
-        col6: responses[6],
-        col7: responses[7],
-        col8: responses[8],
-        col9: responses[9],
+        ...responses.reduce((acc, response, index) => {
+          acc[`col${index}`] = response;
+          return acc;
+        }, {})
       });
       console.log('Response from server:', res.data);
       setResult({
@@ -62,35 +79,39 @@ const PredictorForm = ({ csvfile }) => {
   };
 
   return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        {responses.map((value, index) => (
-          <div key={index}>
-            <label htmlFor={`col${index}`}>{questions[index]?.question}</label>
-            <label><input type='radio' value="10" name={`col${index}`} onChange={() => handleResponseChange(index, "10")}/>Rarely</label>
-            <label><input type='radio' value="20" name={`col${index}`} onChange={() => handleResponseChange(index, "20")}/>Sometimes</label>
-            <label><input type='radio' value="30" name={`col${index}`} onChange={() => handleResponseChange(index, "30")}/>Frequently</label>
-            {/* <select
-              name={`col${index}`}
-              id={`col${index}`}
-              value={value}
-              onChange={(e) => handleResponseChange(index, e.target.value)}
-            >
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="30">30</option>
-            </select> */}
-            <br />
+    <div className="popup-container">
+      <div className="popup">
+        <button className="exit-btn" onClick={handleExit}>X</button>
+        <form onSubmit={handleSubmit}>
+          {questions.length > 0 && (
+            <>
+              <h2>Question {currentQuestionIndex + 1}</h2>
+              <p>{questions[currentQuestionIndex]?.question}</p>
+              <div className="answers">
+                <label><input type='radio' value="10" name={`col${currentQuestionIndex}`} checked={selectedOption[currentQuestionIndex] === "10"} onChange={() => handleResponseChange(currentQuestionIndex, "10")}/>Rarely</label>
+                <label><input type='radio' value="20" name={`col${currentQuestionIndex}`} checked={selectedOption[currentQuestionIndex] === "20"} onChange={() => handleResponseChange(currentQuestionIndex, "20")}/>Sometimes</label>
+                <label><input type='radio' value="30" name={`col${currentQuestionIndex}`} checked={selectedOption[currentQuestionIndex] === "30"} onChange={() => handleResponseChange(currentQuestionIndex, "30")}/>Frequently</label>
+              </div>
+            </>
+          )}
+          <div className="navigation-btns">
+            {currentQuestionIndex > 0 && (
+              <button type="button" onClick={handlePreviousQuestion}>Previous</button>
+            )}
+            {currentQuestionIndex < questions.length - 1 ? (
+              <button type="button" onClick={handleNextQuestion}>Next</button>
+            ) : (
+              <button type="submit">Predict</button>
+            )}
           </div>
-        ))}
-        <button type="submit">Predict</button>
-      </form>
-      {result !== null && (
-        <div>
-          <h2>Prediction Result:</h2>
-          <p>Predicted Percentage: {result.predicted_total}</p>
-        </div>
-      )}
+        </form>
+        {result !== null && (
+          <div>
+            <h2>Prediction Result:</h2>
+            <p>Predicted Percentage: {result.predicted_total}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
