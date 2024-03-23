@@ -14,6 +14,8 @@
     background-color: white;
     padding: 20px;
     border-radius: 8px;
+    width: 80%;
+    height: 80%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
@@ -34,7 +36,11 @@
   label {
     display: block;
     margin-bottom: 5px;
-  }
+    font-family: "Merriweather", serif;
+    font-weight: 500;
+    font-size:x-large;
+    font-style: bold;
+   }
   
   .navigation-btns {
     margin-top: 20px;
@@ -58,5 +64,12 @@
   button:disabled {
     background-color: #d3d3d3;
     cursor: not-allowed;
+  }
+  
+  p{
+    font-family: "Merriweather", serif;
+    font-weight: 900;
+    font-style: normal;
+    font-size: xx-large;
   }
   

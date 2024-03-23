@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse'; 
-import './PredictorForm.css'; // Importing CSS for styling
+import './PredictorForm.css'; 
 
 const PredictorForm = ({ csvfile, onClose }) => {
   const [questions, setQuestions] = useState([]);
@@ -39,33 +39,41 @@ const PredictorForm = ({ csvfile, onClose }) => {
     newResponses[index] = value;
     setResponses(newResponses);
     setSelectedOption({ ...selectedOption, [index]: value });
+    console.log(index + " " + questions.length)
+    handleNextQuestion();
   };
+  
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      handleSubmit();
+    if (currentQuestionIndex < questions.length - 2) {
+      setTimeout(() => {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      }, 500);
     }
   };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
+ 
+   const handlePreviousQuestion = () => {
+     setTimeout(() => {
+     if (currentQuestionIndex > 0) {
+       setCurrentQuestionIndex(currentQuestionIndex - 1);
+     } 
+   }, 500);
+   };
 
   const handleExit = () => {
     onClose();
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
+    if (e) {
+      e.preventDefault();
+    }
+  
     try {
       const res = await axios.post('http://localhost:5000/predict', {
         ...responses.reduce((acc, response, index) => {
           acc[`col${index}`] = response;
+          console.log(`col${index}`);
           return acc;
         }, {})
       });
@@ -77,6 +85,7 @@ const PredictorForm = ({ csvfile, onClose }) => {
       console.log('Error predicting result', error);
     }
   };
+  
 
   return (
     <div className="popup-container">
@@ -85,25 +94,27 @@ const PredictorForm = ({ csvfile, onClose }) => {
         <form onSubmit={handleSubmit}>
           {questions.length > 0 && (
             <>
-              <h2>Question {currentQuestionIndex + 1}</h2>
               <p>{questions[currentQuestionIndex]?.question}</p>
+              {questions[currentQuestionIndex+1]? 
               <div className="answers">
                 <label><input type='radio' value="10" name={`col${currentQuestionIndex}`} checked={selectedOption[currentQuestionIndex] === "10"} onChange={() => handleResponseChange(currentQuestionIndex, "10")}/>Rarely</label>
                 <label><input type='radio' value="20" name={`col${currentQuestionIndex}`} checked={selectedOption[currentQuestionIndex] === "20"} onChange={() => handleResponseChange(currentQuestionIndex, "20")}/>Sometimes</label>
                 <label><input type='radio' value="30" name={`col${currentQuestionIndex}`} checked={selectedOption[currentQuestionIndex] === "30"} onChange={() => handleResponseChange(currentQuestionIndex, "30")}/>Frequently</label>
               </div>
+: ""}
             </>
           )}
+          {questions[currentQuestionIndex]?
           <div className="navigation-btns">
-            {currentQuestionIndex > 0 && (
+            {(currentQuestionIndex +1)> 0 && (
               <button type="button" onClick={handlePreviousQuestion}>Previous</button>
             )}
-            {currentQuestionIndex < questions.length - 1 ? (
+            {(currentQuestionIndex + 1) < (questions.length - 1) ? (
               <button type="button" onClick={handleNextQuestion}>Next</button>
             ) : (
               <button type="submit">Predict</button>
             )}
-          </div>
+          </div>:""}
         </form>
         {result !== null && (
           <div>
